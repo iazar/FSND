@@ -10,5 +10,5 @@ ENV = 'development'
 
 
 # TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:123456@localhost:5432/Fyyurapp'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:123456@localhost:5432/fyyurapp'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
