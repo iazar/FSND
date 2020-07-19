@@ -11,7 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+from flask_wtf import Form, CSRFProtect
 from forms import *
 #----------------------------------------------------------------------------#
 # App Config.
@@ -19,6 +19,7 @@ from forms import *
 
 app = Flask(__name__)
 moment = Moment(app)
+CSRFProtect(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
@@ -28,37 +29,43 @@ migrate = Migrate(app,db)
 # Models.
 #----------------------------------------------------------------------------#
 shows = db.Table('shows', 
-    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'), primary_key=True),
-    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'), primary_key=True),
+    db.Column('venue_id', db.Integer, db.ForeignKey('venues.id'), primary_key=True),
+    db.Column('artist_id', db.Integer, db.ForeignKey('artists.id'), primary_key=True),
     db.Column('start_time', db.DateTime, nullable=False)
 )
 
 class Venue(db.Model):
-    __tablename__ = 'Venue'
+    __tablename__ = 'venues'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
+    address = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120))
+    genres = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     artists = db.relationship('Artist', secondary=shows, backref=db.backref('venues', lazy=True))
+
+    def __repr__(self):
+      return f'<Venue ID: {self.id}, name: {self.name}, artists: {self.artists}>'
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
-    __tablename__ = 'Artist'
+    __tablename__ = 'artists'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
+    name = db.Column(db.String, nullable=False)
+    city = db.Column(db.String(120), nullable=False)
+    state = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.String(120), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
+    def __repr__(self):
+      return f'<Artist ID: {self.id}, name: {self.name}>'
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -226,13 +233,37 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
+  validation_errors = ''
+  error = False
+  try:
+    form = VenueForm(request.form)
+    if request.method == 'POST' and form.validate():
+      new_venue = Venue()
+      form.populate_obj(new_venue)
 
-  # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  return render_template('pages/home.html')
+      db.session.add(new_venue)
+      db.session.commit()
+      # on successful db insert, flash success
+      flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    else:
+      for fieldName, errorMessages in form.errors.items():
+        validation_errors += ' ' + fieldName
+        for err in errorMessages:
+          validation_errors += ' ' + err
+      # TODO: on unsuccessful db insert, flash an error instead.
+      # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
+      # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+      flash(validation_errors)
+  except:
+      db.session.rollback()
+      error = True
+      print(sys.exc_info())
+  finally:
+      db.session.close()
+  if error:
+      abort(500)
+  else:
+      return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
