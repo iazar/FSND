@@ -134,15 +134,19 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_word=request.form.get('search_term', '')
+  venues = Venue.query.filter(Venue.name.ilike('%'+search_word+'%')).all()
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(venues),
+    "data": []
   }
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+  for venue in venues:
+    response["data"].append({
+      "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": Show.query.filter(Show.venue_id == venue.id, Show.start_time > datetime.datetime.now()).count(),
+    })
+  return render_template('pages/search_venues.html', results=response, search_term=search_word)
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
@@ -150,9 +154,7 @@ def show_venue(venue_id):
   # TODO: replace with real venue data from the venues table, using venue_id
   venue_obj = Venue.query.filter(Venue.id == venue_id).first()
   past_shows = Show.query.filter(Show.venue_id == venue_id, Show.start_time < datetime.datetime.now()).all()
-  past_shows_count = Show.query.filter(Show.venue_id == venue_id, Show.start_time < datetime.datetime.now()).count()
   upcoming_shows = Show.query.filter(Show.venue_id == venue_id, Show.start_time > datetime.datetime.now()).all()
-  upcoming_shows_count = Show.query.filter(Show.venue_id == venue_id, Show.start_time > datetime.datetime.now()).count()
   data={
     "id": venue_obj.id,
     "name": venue_obj.name,
@@ -167,8 +169,8 @@ def show_venue(venue_id):
     "image_link": venue_obj.image_link,
     "past_shows": [],
     "upcoming_shows": [],
-    "past_shows_count": past_shows_count,
-    "upcoming_shows_count": upcoming_shows_count,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows),
   }
   for show in past_shows:
     data['past_shows'].append({
@@ -256,14 +258,18 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  search_word=request.form.get('search_term', '')
+  artists = Artist.query.filter(Artist.name.ilike('%'+search_word+'%')).all()
   response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(artists),
+    "data": []
   }
+  for artist in artists:
+    response["data"].append({
+      "id": artist.id,
+      "name": artist.name,
+      "num_upcoming_shows": Show.query.filter(Show.artist_id == artist.id, Show.start_time > datetime.datetime.now()).count(),
+    })
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/artists/<int:artist_id>')
@@ -272,9 +278,7 @@ def show_artist(artist_id):
   # TODO: replace with real venue data from the venues table, using venue_id
   artist_obj = Artist.query.filter(Artist.id == artist_id).first()
   past_shows = Show.query.filter(Show.artist_id == artist_id, Show.start_time < datetime.datetime.now()).all()
-  past_shows_count = Show.query.filter(Show.artist_id == artist_id, Show.start_time < datetime.datetime.now()).count()
   upcoming_shows = Show.query.filter(Show.artist_id == artist_id, Show.start_time > datetime.datetime.now()).all()
-  upcoming_shows_count = Show.query.filter(Show.artist_id == artist_id, Show.start_time > datetime.datetime.now()).count()
   data={
     "id": artist_obj.id,
     "name": artist_obj.name,
@@ -288,8 +292,8 @@ def show_artist(artist_id):
     "image_link": artist_obj.image_link,
     "past_shows": [],
     "upcoming_shows": [],
-    "past_shows_count": past_shows_count,
-    "upcoming_shows_count": upcoming_shows_count,
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows),
   }
   for show in past_shows:
     data['past_shows'].append({
