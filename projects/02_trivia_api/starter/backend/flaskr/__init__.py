@@ -38,7 +38,8 @@ def create_app(test_config=None):
     formatted_categories = {Category.id: Category.type for Category in all_categories}
 
     return jsonify({
-      'categories': formatted_categories
+      'categories': formatted_categories,
+      'success': True
     })
 
 
@@ -67,12 +68,16 @@ def create_app(test_config=None):
     formatted_questions = [Question.format() for Question in all_questions]
     formatted_current_selection = formatted_questions[start:end]
 
-    return jsonify({
+    if len(formatted_current_selection):
+      return jsonify({
       'questions': formatted_current_selection,
       'total_questions': len(all_questions),
       'categories': formatted_categories,
-      'current_category': ''
+      'current_category': '',
+      'success': True
     })
+    else:
+      abort(404)
 
   '''
   @TODO: 
