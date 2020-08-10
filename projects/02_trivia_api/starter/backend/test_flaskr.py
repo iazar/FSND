@@ -18,6 +18,16 @@ class TriviaTestCase(unittest.TestCase):
         self.database_path = "postgresql://{}/{}".format('postgres:123456@localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
+        self.new_question = {
+            'question': 'New Question Test Case ?',
+            'answer': 'Answer Test Case',
+            'difficulty': 1,
+            'category': 1
+        }
+
+        self.invalid_new_question = {
+            'question': 'New Question Test Case ?'
+        }
         # binds the app to the current context
         with self.app.app_context():
             self.db = SQLAlchemy()
@@ -85,6 +95,22 @@ class TriviaTestCase(unittest.TestCase):
         question = Question.query.filter(Question.id == 1).one_or_none()
 
         self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
+
+    def test_create_new_question(self):
+        """Test create new questions"""
+        res = self.client().post('/questions', json=self.new_question)
+        data = json.loads(res.data)
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+
+    def test_create_new_invalid_question(self):
+        """Test create new invalid questions"""
+        res = self.client().post('/questions', json=self.invalid_new_question)
+        data = json.loads(res.data)
+        
+        self.assertEqual(res.status_code, 400)
         self.assertEqual(data['success'], False)
 
 # Make the tests conveniently executable
