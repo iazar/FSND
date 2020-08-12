@@ -113,6 +113,26 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertEqual(data['success'], False)
 
+    def test_get_category_questions(self):
+        """Test get category questions"""
+        res = self.client().get('/categories/1/questions')
+        data = json.loads(res.data)
+        
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['questions'])
+        self.assertTrue(data['total_questions'])
+        self.assertTrue(data['current_category'])
+
+    def test_get_invalid_category_questions(self):
+        """Test get category questions"""
+        res = self.client().get('/categories/200/questions')
+        data = json.loads(res.data)
+        
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['error'], 404)
+        self.assertEqual(data['message'], 'Not found')
+
 # Make the tests conveniently executable
 if __name__ == "__main__":
     unittest.main()
