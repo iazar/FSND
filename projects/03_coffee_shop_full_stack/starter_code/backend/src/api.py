@@ -117,7 +117,7 @@ def update_drinks(jwt,id):
         if not updated_drink_title is None:
             drink.title = updated_drink_title
         if not updated_drink_recipe is None:
-            drink.recipe = updated_drink_recipe
+            drink.recipe = json.dumps(updated_drink_recipe)
         drink.update()
 
         return jsonify({
