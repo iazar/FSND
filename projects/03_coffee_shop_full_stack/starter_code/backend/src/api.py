@@ -82,7 +82,7 @@ def add_drinks(jwt):
 
         return jsonify({
             'success': True,
-            'drinks': drink.long()
+            'drinks': [drink.long()]
         })
 
     except BaseException:
@@ -122,7 +122,7 @@ def update_drinks(jwt,id):
 
         return jsonify({
             'success': True,
-            'drinks': drink.long()
+            'drinks': [drink.long()]
         })
 
     except BaseException:
